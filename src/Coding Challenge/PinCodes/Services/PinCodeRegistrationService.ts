@@ -114,14 +114,11 @@ export class PinCodeRegistrationService extends LogEnabled {
       userId,
       pinCode
     );
+
     ClearCache("user-registrations");
 
-    this.logger.info(
-      `PIN code ${pinCode} revoked successfully for user: ${userId}`
-    );
-
     return {
-      message: `PIN code ${pinCode} updated successfully for user: ${userId}`,
+      message: `PIN code ${pinCode} revoked successfully for user: ${userId}`,
       pinCode: pinCode,
       userId: userId,
     };
@@ -160,12 +157,6 @@ export class PinCodeRegistrationService extends LogEnabled {
       userId
     );
   }
-
-  // async isPinCodeRegistered(userId: string, pinCode: string): Promise<boolean> {
-  //   const registration =
-  //     await this.pinCodeRegistrationRepository.getRegistration(userId, pinCode);
-  //   return !!registration;
-  // }
 
   private async validateDoors(doorIds: string[]) {
     const availableDoors = await this.doorService.getDoors();
