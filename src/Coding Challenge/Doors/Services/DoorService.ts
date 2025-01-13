@@ -33,13 +33,6 @@ export class DoorService extends LogEnabled {
 
     @CacheResult(60, 'access-validation')
     async validateAccessRequest(doorId: string, pinCode: string, timestamp: Date) {
-        // const door = await this.doorRepository.findById(doorId);
-        // if(!door) {
-        //     throw new NotFoundException(`Door with ID "${doorId}" not found.`)
-        // }
-
-        console.log('validateAccessRequest: ', doorId)
-
         const pinEntries = await this.pinCodeRepository.findAll()
         const pinEntry = pinEntries.find(entry => entry.pinCode === pinCode)
 
@@ -58,6 +51,5 @@ export class DoorService extends LogEnabled {
         })
 
         return isValid
-
     }
 }

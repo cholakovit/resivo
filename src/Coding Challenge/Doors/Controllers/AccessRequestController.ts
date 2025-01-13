@@ -42,9 +42,6 @@ export class AccessRequestController extends ControllerBase {
         description: "Your code should validate whether the door would open or not in the simulated scenario, and return the result accordingly."
     })
     async validateAccessRequest(@Param("doorId") doorId: string, @Body() accessRequest: AccessRequestDto) {
-        
-        console.log('validateAccessRequest Controller: ', doorId)
-
         return await this.doorService.validateAccessRequest(doorId, accessRequest.pinCode, accessRequest.simulatedTimestamp);
     }
 
