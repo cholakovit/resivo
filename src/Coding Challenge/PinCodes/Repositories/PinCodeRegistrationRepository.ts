@@ -1,6 +1,6 @@
-import { MemoryRepository } from "../../Boilerplate/Data/MemoryRepository";
+import { MemoryRepository } from "../../../Boilerplate/Data/MemoryRepository";
 import { Injectable } from "@nestjs/common";
-import { PinCodeRegistrationEntity } from "./Model/PinCodeRegistrationEntity";
+import { PinCodeRegistrationEntity } from "../Model/PinCodeRegistrationEntity";
 import { Logger } from "@nestjs/common";
 
 /**

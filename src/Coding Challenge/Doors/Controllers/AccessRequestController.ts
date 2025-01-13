@@ -1,6 +1,6 @@
 import { Body, Controller, ForbiddenException, Get, HttpCode, Inject, Param, Post, Scope } from "@nestjs/common";
 import { AccessRequestDto } from "../Dtos/AccessRequestDto";
-import { DoorService } from "../DoorService";
+import { DoorService } from "../Services/DoorService";
 import { REQUEST } from "@nestjs/core";
 import { ControllerBase } from "../../../Boilerplate/Controllers/ControllerBase";
 import { Request } from "express";

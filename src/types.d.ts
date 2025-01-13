@@ -6,4 +6,11 @@ declare global {
         validTo: Date;
     };
 
+
+    type IApiError = {
+        statusCode: number;
+        status: string;
+        message: string;
+      }
+
 }

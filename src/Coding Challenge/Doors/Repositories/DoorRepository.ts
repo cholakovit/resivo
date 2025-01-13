@@ -1,7 +1,7 @@
-import { MemoryRepository } from "../../Boilerplate/Data/MemoryRepository";
-import { DoorEntity } from "./Model/DoorEntity";
+import { MemoryRepository } from "../../../Boilerplate/Data/MemoryRepository";
+import { DoorEntity } from "../Model/DoorEntity";
 import { Injectable } from "@nestjs/common";
-import { DbSeeder } from "../../Boilerplate/Data/DbSeeder";
+import { DbSeeder } from "../../../Boilerplate/Data/DbSeeder";
 
 
 /**

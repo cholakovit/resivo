@@ -1,5 +1,5 @@
 import { UserRepository } from "../Users/Data/UserRepository";
-import { DoorRepository } from "../../Coding Challenge/Doors/DoorRepository";
+import { DoorRepository } from "../../Coding Challenge/Doors/Repositories/DoorRepository";
 import { DoorEntity } from "../../Coding Challenge/Doors/Model/DoorEntity";
 import { UserEntity } from "../Users/Model/UserEntity";
 

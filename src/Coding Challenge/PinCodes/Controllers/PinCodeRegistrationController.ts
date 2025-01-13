@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Scope } from "@nestjs/common";
-import { PinCodeRegistrationService } from "../PinCodeRegistrationService";
+import { PinCodeRegistrationService } from "../Services/PinCodeRegistrationService";
 import { PinCodeRegistrationDto } from "../Dtos/PinCodeRegistrationDto";
 import { REQUEST } from "@nestjs/core";
 import { Request } from "express";

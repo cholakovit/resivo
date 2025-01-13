@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { DoorRepository } from "./DoorRepository";
-import { LogEnabled } from "../../Boilerplate/Logging/LogEnabled";
-import { PinCodeRegistrationRepository } from "../PinCodes/PinCodeRegistrationRepository";
+import { DoorRepository } from "../Repositories/DoorRepository";
+import { LogEnabled } from "../../../Boilerplate/Logging/LogEnabled";
+import { PinCodeRegistrationRepository } from "../../PinCodes/Repositories/PinCodeRegistrationRepository";
+import { CacheResult } from "src/helper/decorators";
 
 
 /**
@@ -27,9 +28,10 @@ export class DoorService extends LogEnabled {
 
     /**
      * Resolves whether a given key is authorized to open the specified door at
-     * a given time.
+     * a given time, with caching logic..
      */
 
+    @CacheResult(60, 'access-validation')
     async validateAccessRequest(doorId: string, pinCode: string, timestamp: Date) {
         // const door = await this.doorRepository.findById(doorId);
         // if(!door) {

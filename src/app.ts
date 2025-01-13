@@ -4,6 +4,8 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { INestApplication } from "@nestjs/common";
 import helmet from "helmet";
 import { rateLimiting } from "./helper/rateLimiting";
+import { Logger } from "nestjs-pino";
+import { GlobalErrorHandler } from "./middleware/ErrorHandler";
 
 export async function createApp(app: INestApplication): Promise<INestApplication> {
     app.use(helmet());
@@ -31,6 +33,9 @@ export async function createApp(app: INestApplication): Promise<INestApplication
         })
     );
 
+    const logger = app.get(Logger);
+    app.useGlobalFilters(new GlobalErrorHandler(logger));
+
     const config = new DocumentBuilder()
         .setTitle("resivo Coding Challenge")
         .setDescription("The place where candidates shine :)")
@@ -40,8 +45,8 @@ export async function createApp(app: INestApplication): Promise<INestApplication
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup("api", app, document);
 
-    const logger = createLogger("bootstrap");
-    logger.info("Application configured successfully");
-
+    const bootstrapLogger = createLogger("bootstrap");
+    bootstrapLogger.info("Application configured successfully");
+    
     return app;
 }

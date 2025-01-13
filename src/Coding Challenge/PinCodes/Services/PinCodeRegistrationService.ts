@@ -1,8 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { PinCodeRegistration } from "./Model/PinCodeRegistration";
-import { DoorService } from "../Doors/DoorService";
-import { LogEnabled } from "../../Boilerplate/Logging/LogEnabled";
-import { PinCodeRegistrationRepository } from "./PinCodeRegistrationRepository";
+import { PinCodeRegistration } from "../Model/PinCodeRegistration";
+import { DoorService } from "../../Doors/Services/DoorService";
+import { LogEnabled } from "../../../Boilerplate/Logging/LogEnabled";
+import { PinCodeRegistrationRepository } from "../Repositories/PinCodeRegistrationRepository";
+import { CacheResult, ClearCache } from "src/helper/decorators";
 
 @Injectable()
 export class PinCodeRegistrationService extends LogEnabled {
@@ -14,8 +15,9 @@ export class PinCodeRegistrationService extends LogEnabled {
   }
 
   /**
-   * Gets all current registrations.
+   * Gets all current registrations with caching.
    */
+  @CacheResult(120, 'user-registrations')
   async getRegistrations() {
     // nothing to do here - just a little helper for you during testing
     return this.pinCodeRegistrationRepository.findAll();
@@ -121,6 +123,7 @@ export class PinCodeRegistrationService extends LogEnabled {
       userId,
       pinCode
     );
+    ClearCache('user-registrations');
 
     this.logger.info(
       `PIN code ${pinCode} revoked successfully for user: ${userId}`
@@ -156,6 +159,8 @@ export class PinCodeRegistrationService extends LogEnabled {
         }
       }
     }
+
+    return true;
   }
 
   async getAllRegistrationsForUser(
