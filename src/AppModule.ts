@@ -9,8 +9,8 @@ import { PinCodeRegistrationController } from "./Coding Challenge/PinCodes/Contr
 import { AccessRequestController } from "./Coding Challenge/Doors/Controllers/AccessRequestController";
 import { PinCodeRegistrationRepository } from "./Coding Challenge/PinCodes/Repositories/PinCodeRegistrationRepository";
 import { SanitizeRequestsMiddleware } from "./middleware/SanitizeRequests";
-import { AppLoggerModule } from "./helper/logger";
-import { rateLimiting } from "./helper/rateLimiting";
+import { AppLoggerModule } from "./helper/Logger";
+import { rateLimiting } from "./helper/settings";
 
 @Module({
     imports: [AppLoggerModule],
