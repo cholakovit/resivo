@@ -2,7 +2,7 @@
 export class ApiError extends Error implements IApiError {
   statusCode: number
   status: string
-  errors?: any
+  errors?: ApiErrorDetail[]
 
   constructor(statusCode: number, message: string, status: string = 'error') {
     super(message)
@@ -11,5 +11,5 @@ export class ApiError extends Error implements IApiError {
     Object.setPrototypeOf(this, new.target.prototype)
   }
 }
-
+  
 export default ApiError

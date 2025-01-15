@@ -6,6 +6,7 @@ import { PinCodeRegistrationRepository } from "../Repositories/PinCodeRegistrati
 import { CacheResult, ClearCache } from "src/helper/decorators";
 import ApiError from "src/helper/ApiError";
 import { StatusCodes } from "http-status-codes";
+import { PinCodeRegistrationEntity } from "../Model/PinCodeRegistrationEntity";
 
 @Injectable()
 export class PinCodeRegistrationService extends LogEnabled {
@@ -47,8 +48,9 @@ export class PinCodeRegistrationService extends LogEnabled {
 
     await this.pinCodeRegistrationRepository.savePinCodeRegistration({
       ...pinRegistration,
-      userId,
-    } as PinCodeRegistration);
+      registeredBy: userId,
+    } as PinCodeRegistrationEntity);
+    
 
     this.logger.info(
       `PIN code ${registration.pinCode} registered successfully for user: ${userId}`
@@ -103,6 +105,7 @@ export class PinCodeRegistrationService extends LogEnabled {
   /**
    * Revokes the user's registration for the specified pin code.
    */
+  @ClearCache("user-registrations")
   async revokePinCodeAuthorizations(userId: string, pinCode: string) {
     const existingRegistration =
       await this.pinCodeRegistrationRepository.getRegistration(userId, pinCode);
@@ -114,8 +117,6 @@ export class PinCodeRegistrationService extends LogEnabled {
       userId,
       pinCode
     );
-
-    ClearCache("user-registrations");
 
     return {
       message: `PIN code ${pinCode} revoked successfully for user: ${userId}`,

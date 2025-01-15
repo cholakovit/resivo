@@ -9,7 +9,7 @@ describe("Scenarios", () => {
 
   it("should not validate PIN if time is outside validity limits (Scenario 1)", async () => {
     const registration = {
-      userId: "peter",
+      registeredBy: "peter",
       pinCode: "5678",
       doorIds: ["garage"],
       restrictions: [
@@ -32,7 +32,7 @@ describe("Scenarios", () => {
 
   it("should not validate PIN if not registered for specific door (Scenario 2)", async () => {
     const registration = {
-      userId: "peter",
+      registeredBy: "peter",
       pinCode: "8765",
       doorIds: ["main"],
       restrictions: [
@@ -55,7 +55,7 @@ describe("Scenarios", () => {
 
   it("should not validate invalid PIN code (Scenario 3)", async () => {
     const registration = {
-      userId: "peter",
+      registeredBy: "peter",
       pinCode: "1234",
       doorIds: ["garage"],
       restrictions: [],
@@ -73,7 +73,7 @@ describe("Scenarios", () => {
 
   it("should not validate PIN if time is before the validity start date (Scenario 4)", async () => {
     const registration = {
-      userId: "peter",
+      registeredBy: "peter",
       pinCode: "4321",
       doorIds: ["garage"],
       restrictions: [

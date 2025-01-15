@@ -10,7 +10,7 @@ describe('', () => {
 
     it('should create a new PIN code registration', async () => {
         const registration = {
-            userId: 'peter',
+            registeredBy: 'peter',
             pinCode: '1234',
             doorIds: ['garage'],
             restrictions: [],
@@ -24,7 +24,7 @@ describe('', () => {
 
     it('should update an existing PIN code registration', async () => {
         const registration = {
-            userId: 'peter',
+            registeredBy: 'peter',
             pinCode: '1234',
             doorIds: ['garage'],
             restrictions: [],
@@ -33,7 +33,7 @@ describe('', () => {
         await repository.savePinCodeRegistration(registration)
 
         const updateRegistration = {
-            userId: 'peter',
+            registeredBy: 'peter',
             pinCode: '1234',
             doorIds: ['main', 'garage'],
             restrictions: [],
@@ -47,7 +47,7 @@ describe('', () => {
 
     it('should delete a PIN code registration', async () => {
         const registration = {
-            userId: 'peter',
+            registeredBy: 'peter',
             pinCode: '1234',
             doorIds: ['garage'],
             restrictions: [],
@@ -67,7 +67,7 @@ describe('', () => {
         const validTo = new Date(now.getTime() + 1000 * 60 * 60)
 
         const registration = {
-            userId: 'thor',
+            registeredBy: 'thor',
             pinCode: '9999',
             doorIds: ['gym'],
             restrictions: [{ validFrom, validTo }]
@@ -85,7 +85,7 @@ describe('', () => {
         const validTo = new Date(now.getTime() + 1000 * 60 * 60 * 2)
 
         const registration = {
-            userId: 'groot',
+            registeredBy: 'groot',
             pinCode: '4444',
             doorIds: ['main'],
             restrictions: [{ validFrom, validTo }],
@@ -99,14 +99,14 @@ describe('', () => {
 
     it('should return all registrations', async () => {
         const registration1 = {
-            userId: 'peter',
+            registeredBy: 'peter',
             pinCode: '1234',
             doorIds: ['garage'],
             restrictions: [],
         }
 
         const registration2 = {
-            userId: 'wanda',
+            registeredBy: 'wanda',
             pinCode: '5678',
             doorIds: ['spa'],
             restrictions: [],
@@ -119,6 +119,4 @@ describe('', () => {
         expect(result).toHaveLength(2)
         expect(result).toEqual(expect.arrayContaining([registration1, registration2]))
     })
-
-    
 })

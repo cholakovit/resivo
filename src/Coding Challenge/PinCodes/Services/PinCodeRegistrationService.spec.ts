@@ -3,9 +3,31 @@ import { PinCodeRegistrationRepository } from '../Repositories/PinCodeRegistrati
 import { DoorService } from '../../Doors/Services/DoorService';
 import { DoorRepository } from '../../Doors/Repositories/DoorRepository';
 
+import 'reflect-metadata';
+
 jest.mock('src/helper/decorators', () => ({
-  CacheResult: () => (target: any, propertyKey: string, descriptor: PropertyDescriptor) => descriptor,
-  ClearCache: jest.fn(),
+  CacheResult: () => (
+    _: Object,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) => {
+    const originalMethod = descriptor.value;
+    descriptor.value = function (...args: unknown[]) {
+      return originalMethod?.apply(this, args);
+    };
+    return descriptor;
+  },
+  ClearCache: () => (
+    _: Object,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) => {
+    const originalMethod = descriptor.value;
+    descriptor.value = function (...args: unknown[]) {
+      return originalMethod?.apply(this, args); 
+    };
+    return descriptor;
+  },
 }));
 
 describe('PinCodeRegistrationService - Overlapping Timeframes', () => {
@@ -67,13 +89,13 @@ describe('PinCodeRegistrationService - Overlapping Timeframes', () => {
       'user1',
       '1234',
       'main',
-      dateWithinOverlap,
+      dateWithinOverlap
     );
     const canAccessPin2 = await service.validateAccess(
       'user1',
       '5678',
       'main',
-      dateWithinOverlap,
+      dateWithinOverlap
     );
 
     expect(canAccessPin1).toBe(true);

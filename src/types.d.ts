@@ -13,4 +13,15 @@ declare global {
         message: string;
       }
 
+      type Registration = {
+        userId: string;
+        pinCode: string;
+        doorsIds: string[];
+      }
+
+      type ApiErrorDetail = {
+        field: string; 
+        message: string; 
+      }
+
 }

@@ -8,21 +8,25 @@ import { StatusCodes } from "http-status-codes";
 /**
  * A repository that provides access to stored pin registrations
  * May contain additional data lookups, if the base methods
- * aren't sufficient.
+ * aren't sufficient. 
  */
+
+
+//PinCodeRegistrationEntity  | PinCodeRegistration
+
 @Injectable()
 export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegistrationEntity> {
   private database: Map<string, PinCodeRegistrationEntity[]> = new Map();
   private readonly logger = new Logger(PinCodeRegistrationEntity.name);
 
-  async savePinCodeRegistration(registration: any): Promise<void> {
-    const { userId, pinCode } = registration;
+  async savePinCodeRegistration(registration: PinCodeRegistrationEntity): Promise<void> {
+    const { registeredBy, pinCode } = registration;
 
-    if (!this.database.has(userId)) {
-      this.database.set(userId, []);
+    if (!this.database.has(registeredBy)) {
+      this.database.set(registeredBy, []);
     }
 
-    const userRegistrations = this.database.get(userId);
+    const userRegistrations = this.database.get(registeredBy);
 
     const existingRegistration = userRegistrations.find(
       (reg: PinCodeRegistrationEntity) => reg.pinCode === pinCode
@@ -31,12 +35,12 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
     if (existingRegistration) {
       Object.assign(existingRegistration, registration);
       this.logger.log(
-        `Updated registration for PIN code: ${pinCode}, user: ${userId}`
+        `Updated registration for PIN code: ${pinCode}, user: ${registeredBy}`
       );
     } else {
       userRegistrations.push(registration);
       this.logger.log(
-        `Created new registration for PIN code: ${pinCode}, user: ${userId}`
+        `Created new registration for PIN code: ${pinCode}, user: ${registeredBy}`
       );
     }
   }
@@ -94,7 +98,7 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
     return userRegistrations.find((reg) => reg.pinCode === pinCode) || null;
   }
 
-  async validateRegistration(registration: any): Promise<void> {
+  async validateRegistration(registration: Registration): Promise<void> {
     const { userId, pinCode, doorsIds } = registration;
 
     if (
