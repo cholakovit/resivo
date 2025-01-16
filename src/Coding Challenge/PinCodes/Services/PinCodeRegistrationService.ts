@@ -30,14 +30,7 @@ export class PinCodeRegistrationService extends LogEnabled {
    * Registers a new pinCode registration and updates the whitelists
    * of the authorized devices accordingly.
    */
-  async registerPinCodeAuthorizations(
-    userId: string,
-    registration: {
-      pinCode: string;
-      doorIds: string[];
-      restrictions?: AccessRestrictions[];
-    }
-  ) {
+  async registerPinCodeAuthorizations(userId: string, registration: PinCodeRegistration) {
     await this.validateDoors(registration.doorIds);
 
     const pinRegistration: PinCodeRegistration = {
@@ -154,14 +147,8 @@ export class PinCodeRegistrationService extends LogEnabled {
 
     if (!registration.doorIds.includes(doorId)) return false;
 
-    if (registration.restrictions?.length) {
-      const isAccessRestricted = registration.restrictions.some(
-        ({ validFrom, validTo }) =>
-          (validFrom && date < validFrom) || (validTo && date > validTo)
-      );
-
-      if (isAccessRestricted) return false;
-    }
+    if (registration.restrictions?.length) 
+      if (this.isAccessRestricted(registration.restrictions, date)) return false;
 
     return true;
   }
@@ -185,5 +172,17 @@ export class PinCodeRegistrationService extends LogEnabled {
         `Doors ${invalidDoors.join(", ")} are not available`
       );
     }
+  }
+
+  private isAccessRestricted(
+    restrictions: AccessRestrictions[],
+    date: Date
+  ): boolean {
+    return restrictions.some(({ validFrom, validTo }) => {
+      const isBeforeValidFrom = validFrom ? date < validFrom : false;
+      const isAfterValidTo = validTo ? date > validTo : false;
+  
+      return isBeforeValidFrom || isAfterValidTo;
+    });
   }
 }
