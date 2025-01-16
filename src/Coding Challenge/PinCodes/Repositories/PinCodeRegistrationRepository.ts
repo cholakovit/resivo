@@ -8,23 +8,20 @@ import { StatusCodes } from "http-status-codes";
 /**
  * A repository that provides access to stored pin registrations
  * May contain additional data lookups, if the base methods
- * aren't sufficient. 
+ * aren't sufficient.
  */
-
-
-//PinCodeRegistrationEntity  | PinCodeRegistration
 
 @Injectable()
 export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegistrationEntity> {
   private database: Map<string, PinCodeRegistrationEntity[]> = new Map();
   private readonly logger = new Logger(PinCodeRegistrationEntity.name);
 
-  async savePinCodeRegistration(registration: PinCodeRegistrationEntity): Promise<void> {
+  async savePinCodeRegistration(
+    registration: PinCodeRegistrationEntity
+  ): Promise<void> {
     const { registeredBy, pinCode } = registration;
 
-    if (!this.database.has(registeredBy)) {
-      this.database.set(registeredBy, []);
-    }
+    if (!this.database.has(registeredBy)) this.database.set(registeredBy, []);
 
     const userRegistrations = this.database.get(registeredBy);
 
@@ -45,6 +42,16 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
     }
   }
 
+  async findByPinCode(pinCode: string) {
+    for (const userRegistrations of this.database.values()) {
+      const registration = userRegistrations.find(
+        (reg) => reg.pinCode === pinCode
+      );
+      if (registration) return registration;
+    }
+    return null;
+  }
+
   async findAll(): Promise<PinCodeRegistrationEntity[]> {
     const allRegistrations: PinCodeRegistrationEntity[] = [];
 
@@ -59,29 +66,20 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
     return allRegistrations;
   }
 
-  async deletePicCodeRegistration(
+  async deletePinCodeRegistration(
     userId: string,
     pinCode: string
   ): Promise<void> {
-    const userRegistrations = this.database.get(userId);
-
-    if (!userRegistrations)
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `No registrations found for user: ${userId}`
+    const userRegistrations = this.getUserRegistrationsOrThrow(userId);
+    this.removePinCodeOrThrow(userRegistrations, userId, pinCode);
+  
+    if (userRegistrations.length === 0) {
+      this.removeUserFromDatabase(userId);
+    } else {
+      this.logger.log(
+        `Deleted registration for PIN code: ${pinCode}, user: ${userId}`
       );
-
-    const index = userRegistrations.findIndex((reg) => reg.pinCode === pinCode);
-    if (index === -1)
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `PIN code ${pinCode} not found for user: ${userId}`
-      );
-
-    userRegistrations.splice(index, 1);
-    this.logger.log(
-      `Deleted registration for PIN code: ${pinCode}, user: ${userId}`
-    );
+    }
   }
 
   async getUserRegistrations(
@@ -94,8 +92,24 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
     userId: string,
     pinCode: string
   ): Promise<PinCodeRegistrationEntity | null> {
-    const userRegistrations = this.database.get(userId) || [];
-    return userRegistrations.find((reg) => reg.pinCode === pinCode) || null;
+    const userRegistrations = this.database.get(userId);
+
+    if (!userRegistrations) {
+      this.logger.warn(
+        `No registrations found for userId: ${userId} when looking for pinCode: ${pinCode}`
+      );
+      return null; 
+    }
+  
+    const registration = userRegistrations.find((reg) => reg.pinCode === pinCode);
+    if (!registration) {
+      this.logger.warn(
+        `No registration found for pinCode: ${pinCode} for userId: ${userId}`
+      );
+      return null;
+    }
+  
+    return registration;
   }
 
   async validateRegistration(registration: Registration): Promise<void> {
@@ -106,25 +120,13 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
       !pinCode ||
       !doorsIds ||
       !Array.isArray(doorsIds) ||
-      doorsIds.length === 0
-    ) {
+      doorsIds.length === 0 ||
+      !doorsIds.every((doorId) => typeof doorId === "string" && doorId.trim() !== "")
+    )
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
         "Invalid registration data. Ensure userId, pinCode, and doorIds are provided."
       );
-    }
-  }
-
-  async findByPinCode(pinCode: string) {
-    for (const userRegistrations of this.database.values()) {
-      const registration = userRegistrations.find(
-        (reg) => reg.pinCode === pinCode
-      );
-      if (registration) {
-        return registration;
-      }
-    }
-    return null;
   }
 
   async isPinValidForDoor(
@@ -133,20 +135,28 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
     dataTime: Date
   ): Promise<boolean> {
     const pinEntry = await this.findByPinCode(pin);
-    if (!pinEntry) {
-      return false;
-    }
+    return this.isValidPinEntry(pinEntry, door, new Date(dataTime))
+  }
 
-    if (!pinEntry.doorIds.includes(door)) {
-      return false;
-    }
+  private isValidPinEntry(
+    pinEntry: PinCodeRegistrationEntity | null,
+    door: string,
+    currentDate: Date
+  ): boolean {
+    if (!pinEntry) return false;
+  
+    if (!pinEntry.doorIds.includes(door)) return false;
+  
+    if (!this.isWithinRestrictions(pinEntry.restrictions, currentDate)) return false;
+  
+    return true;
+  }
 
-    const currentDate = new Date(dataTime);
-    const restrictions = pinEntry.restrictions || [];
-
-    if (restrictions.length === 0) {
-      return true;
-    }
+  private isWithinRestrictions(
+    restrictions: Array<{ validFrom?: Date; validTo?: Date }>,
+    currentDate: Date
+  ): boolean {
+    if (!restrictions || restrictions.length === 0) return true;
 
     for (const restriction of restrictions) {
       const validFrom = restriction.validFrom
@@ -159,11 +169,41 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
       if (
         (!validFrom || currentDate >= validFrom) &&
         (!validTo || currentDate <= validTo)
-      ) {
+      )
         return true;
-      }
     }
 
     return false;
+  }
+
+  private getUserRegistrationsOrThrow(userId: string): PinCodeRegistrationEntity[] {
+    const userRegistrations = this.database.get(userId);
+    if (!userRegistrations) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `No registrations found for user: ${userId}`
+      );
+    }
+    return userRegistrations;
+  }
+  
+  private removePinCodeOrThrow(
+    userRegistrations: PinCodeRegistrationEntity[],
+    userId: string,
+    pinCode: string
+  ): void {
+    const index = userRegistrations.findIndex((reg) => reg.pinCode === pinCode);
+    if (index === -1) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Attempt to delete PIN code failed. PIN code ${pinCode} not found for user: ${userId}`
+      );
+    }
+    userRegistrations.splice(index, 1);
+  }
+
+  private removeUserFromDatabase(userId: string): void {
+    this.database.delete(userId);
+    this.logger.log(`Removed all registrations for user: ${userId}`);
   }
 }

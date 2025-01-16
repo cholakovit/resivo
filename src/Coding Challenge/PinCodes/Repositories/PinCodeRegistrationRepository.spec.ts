@@ -55,7 +55,7 @@ describe('', () => {
 
         await repository.savePinCodeRegistration(registration)
 
-        await repository.deletePicCodeRegistration('peter', '1234')
+        await repository.deletePinCodeRegistration('peter', '1234')
 
         const result = await repository.getRegistration('peter', '1234')
         expect(result).toBeNull()

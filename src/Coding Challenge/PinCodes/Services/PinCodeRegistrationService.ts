@@ -50,7 +50,6 @@ export class PinCodeRegistrationService extends LogEnabled {
       ...pinRegistration,
       registeredBy: userId,
     } as PinCodeRegistrationEntity);
-    
 
     this.logger.info(
       `PIN code ${registration.pinCode} registered successfully for user: ${userId}`
@@ -72,14 +71,10 @@ export class PinCodeRegistrationService extends LogEnabled {
     userId: string,
     registration: PinCodeRegistration
   ) {
-    const existingRegistration =
-      await this.pinCodeRegistrationRepository.getRegistration(
-        userId,
-        registration.pinCode
-      );
-    if (!existingRegistration) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, `No registration found for PIN code: ${registration.pinCode}, user: ${userId}`);
-    }
+    const existingRegistration = await this.findRegistrationOrThrow(
+      userId,
+      registration.pinCode
+    );
 
     await this.validateDoors(registration.doorIds);
 
@@ -107,22 +102,44 @@ export class PinCodeRegistrationService extends LogEnabled {
    */
   @ClearCache("user-registrations")
   async revokePinCodeAuthorizations(userId: string, pinCode: string) {
-    const existingRegistration =
-      await this.pinCodeRegistrationRepository.getRegistration(userId, pinCode);
-    if (!existingRegistration) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, `No registration found for PIN code: ${pinCode}, user: ${userId}`);
-    }
-
-    await this.pinCodeRegistrationRepository.deletePicCodeRegistration(
+    const existingRegistration = await this.findRegistrationOrThrow(
       userId,
       pinCode
     );
+
+    await this.deleteRegistration(userId, pinCode);
 
     return {
       message: `PIN code ${pinCode} revoked successfully for user: ${userId}`,
       pinCode: pinCode,
       userId: userId,
     };
+  }
+
+  async findRegistrationOrThrow(
+    userId: string,
+    pinCode: string
+  ): Promise<PinCodeRegistrationEntity> {
+    const registration =
+      await this.pinCodeRegistrationRepository.getRegistration(userId, pinCode);
+    if (!registration) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `PIN code ${pinCode} not found for user: ${userId}`
+      );
+    }
+
+    return registration;
+  }
+
+  private async deleteRegistration(userId: string, pinCode: string) {
+    await this.pinCodeRegistrationRepository.deletePinCodeRegistration(
+      userId,
+      pinCode
+    );
+    this.logger.info(
+      `PIN code ${pinCode} revoked successfully for user: ${userId}`
+    );
   }
 
   async validateAccess(
@@ -134,18 +151,16 @@ export class PinCodeRegistrationService extends LogEnabled {
     const registration =
       await this.pinCodeRegistrationRepository.getRegistration(userId, pinCode);
     if (!registration) return false;
+
     if (!registration.doorIds.includes(doorId)) return false;
 
-    if (registration.restrictions) {
-      for (const restriction of registration.restrictions) {
-        const { validFrom, validTo } = restriction;
-        if (
-          (validFrom && date < new Date(validFrom)) ||
-          (validTo && date > new Date(validTo))
-        ) {
-          return false;
-        }
-      }
+    if (registration.restrictions?.length) {
+      const isAccessRestricted = registration.restrictions.some(
+        ({ validFrom, validTo }) =>
+          (validFrom && date < validFrom) || (validTo && date > validTo)
+      );
+
+      if (isAccessRestricted) return false;
     }
 
     return true;

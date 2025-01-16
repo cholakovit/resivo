@@ -9,7 +9,7 @@ import * as path from "path";
   imports: [
     LoggerModule.forRootAsync({
       useFactory: () => {
-        const logDir = path.resolve(__dirname, "../logs");
+        const logDir = path.resolve(__dirname, "../../logs/");
 
         if (!fs.existsSync(logDir)) {
           fs.mkdirSync(logDir, { recursive: true });
@@ -18,10 +18,14 @@ import * as path from "path";
         const logFilePath = path.resolve(logDir, "app.log");
 
         const streams = [
-          { stream: process.stdout }, // Terminal logs
+          process.env.NODE_ENV !== "production"
+            ? { stream: require("pino-pretty")() }
+            : { stream: process.stdout },
+
+
           {
             stream: pino.destination({
-              dest: path.resolve(logDir, "app.log"),
+              dest: logFilePath,
               minLength: 0,
               sync: true,
             }),
@@ -31,10 +35,6 @@ import * as path from "path";
         return {
           pinoHttp: {
             level: process.env.LOG_LEVEL,
-            transport:
-              process.env.NODE_ENV !== "production"
-                ? { target: "pino-pretty" }
-                : undefined,
             stream: multistream(streams),
           },
         };
