@@ -30,7 +30,10 @@ export class PinCodeRegistrationService extends LogEnabled {
    * Registers a new pinCode registration and updates the whitelists
    * of the authorized devices accordingly.
    */
-  async registerPinCodeAuthorizations(userId: string, registration: PinCodeRegistration) {
+  async registerPinCodeAuthorizations(
+    userId: string,
+    registration: PinCodeRegistration
+  ) {
     await this.validateDoors(registration.doorIds);
 
     const pinRegistration: PinCodeRegistration = {
@@ -64,7 +67,7 @@ export class PinCodeRegistrationService extends LogEnabled {
     userId: string,
     registration: PinCodeRegistration
   ) {
-    const existingRegistration = await this.findRegistrationOrThrow(
+    const existingRegistration = await this.findRegistration(
       userId,
       registration.pinCode
     );
@@ -95,10 +98,7 @@ export class PinCodeRegistrationService extends LogEnabled {
    */
   @ClearCache("user-registrations")
   async revokePinCodeAuthorizations(userId: string, pinCode: string) {
-    const existingRegistration = await this.findRegistrationOrThrow(
-      userId,
-      pinCode
-    );
+    const existingRegistration = await this.findRegistration(userId, pinCode);
 
     await this.deleteRegistration(userId, pinCode);
 
@@ -109,7 +109,15 @@ export class PinCodeRegistrationService extends LogEnabled {
     };
   }
 
-  async findRegistrationOrThrow(
+  /**
+   * Finds a registration for a specific user and PIN code.
+   *
+   * @param userId - The ID of the user who owns the registration.
+   * @param pinCode - The PIN code associated with the registration.
+   * @returns {Promise<PinCodeRegistrationEntity>} The registration details if found.
+   * @throws {ApiError} If the registration is not found.
+   */
+  async findRegistration(
     userId: string,
     pinCode: string
   ): Promise<PinCodeRegistrationEntity> {
@@ -125,6 +133,14 @@ export class PinCodeRegistrationService extends LogEnabled {
     return registration;
   }
 
+  /**
+   * Deletes a registration for a specific user and PIN code.
+   *
+   * @param userId - The ID of the user whose registration will be deleted.
+   * @param pinCode - The PIN code associated with the registration to be deleted.
+   * @returns {Promise<void>} No return value.
+   * @logs Logs a message indicating the successful deletion of the registration.
+   */
   private async deleteRegistration(userId: string, pinCode: string) {
     await this.pinCodeRegistrationRepository.deletePinCodeRegistration(
       userId,
@@ -135,24 +151,34 @@ export class PinCodeRegistrationService extends LogEnabled {
     );
   }
 
+  /**
+   * Validates whether a user has access to a specific door using a PIN code at a given time.
+   *
+   * @param userId - The ID of the user attempting to access the door.
+   * @param pinCode - The PIN code provided for access.
+   * @param doorId - The ID of the door the user is trying to access.
+   * @param date - The date and time of the access attempt.
+   * @returns {Promise<boolean>} True if the access is valid, false otherwise.
+   */
   async validateAccess(
     userId: string,
     pinCode: string,
     doorId: string,
     date: Date
   ): Promise<boolean> {
-    const registration =
-      await this.pinCodeRegistrationRepository.getRegistration(userId, pinCode);
-    if (!registration) return false;
-
-    if (!registration.doorIds.includes(doorId)) return false;
-
-    if (registration.restrictions?.length) 
-      if (this.isAccessRestricted(registration.restrictions, date)) return false;
-
-    return true;
+    return this.pinCodeRegistrationRepository.validateRegistration(
+      () => this.pinCodeRegistrationRepository.getRegistration(userId, pinCode),
+      doorId,
+      date
+    );
   }
 
+  /**
+   * Retrieves all PIN code registrations for a specific user.
+   *
+   * @param userId - The ID of the user whose registrations need to be retrieved.
+   * @returns {Promise<PinCodeRegistration[]>} A list of PIN code registrations associated with the user.
+   */
   async getAllRegistrationsForUser(
     userId: string
   ): Promise<PinCodeRegistration[]> {
@@ -161,28 +187,26 @@ export class PinCodeRegistrationService extends LogEnabled {
     );
   }
 
+  /**
+   * Validates whether the provided door IDs exist in the system.
+   *
+   * @param doorIds - An array of door IDs to validate.
+   * @throws {ApiError} If any of the provided door IDs are not available.
+   * @returns {Promise<void>} No return value if validation is successful.
+   */
   private async validateDoors(doorIds: string[]) {
     const availableDoors = await this.doorService.getDoors();
+    const availableDoorIds = new Set(availableDoors.map((door) => door.id));
+
     const invalidDoors = doorIds.filter(
-      (doorIds) => !availableDoors.some((door) => door.id === doorIds)
+      (doorId) => !availableDoorIds.has(doorId)
     );
+
     if (invalidDoors.length > 0) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
         `Doors ${invalidDoors.join(", ")} are not available`
       );
     }
-  }
-
-  private isAccessRestricted(
-    restrictions: AccessRestrictions[],
-    date: Date
-  ): boolean {
-    return restrictions.some(({ validFrom, validTo }) => {
-      const isBeforeValidFrom = validFrom ? date < validFrom : false;
-      const isAfterValidTo = validTo ? date > validTo : false;
-  
-      return isBeforeValidFrom || isAfterValidTo;
-    });
   }
 }

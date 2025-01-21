@@ -44,6 +44,4 @@ export class AccessRequestController extends ControllerBase {
     async validateAccessRequest(@Param("doorId") doorId: string, @Body() accessRequest: AccessRequestDto) {
         return await this.doorService.validateAccessRequest(doorId, accessRequest.pinCode, accessRequest.simulatedTimestamp);
     }
-
-
 }

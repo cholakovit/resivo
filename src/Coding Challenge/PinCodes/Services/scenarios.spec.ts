@@ -93,4 +93,89 @@ describe("Scenarios", () => {
     );
     expect(isValid).toBe(false);
   });
+
+  it("should validate PIN for a door within the validity period (Success Scenario)", async () => {
+    const registration = {
+      registeredBy: "peter",
+      pinCode: "1111",
+      doorIds: ["garage"],
+      restrictions: [
+        {
+          validFrom: new Date("2024-01-01T00:00:00Z"),
+          validTo: new Date("2024-12-31T23:59:59Z"),
+        },
+      ],
+    };
+  
+    await repository.savePinCodeRegistration(registration);
+  
+    const isValid = await repository.isPinValidForDoor(
+      "1111",
+      "garage",
+      new Date("2024-06-15T10:00:00Z")
+    );
+    expect(isValid).toBe(true);
+  });
+
+  it("should validate PIN without restrictions (24/7 validity)", async () => {
+    const registration = {
+      registeredBy: "peter",
+      pinCode: "2222",
+      doorIds: ["main"],
+      restrictions: [],
+    };
+  
+    await repository.savePinCodeRegistration(registration);
+  
+    const isValid = await repository.isPinValidForDoor(
+      "2222",
+      "main",
+      new Date("2024-06-15T10:00:00Z")
+    );
+    expect(isValid).toBe(true);
+  });
+
+  it("should validate PIN for a door with only end date restriction", async () => {
+    const registration = {
+      registeredBy: "peter",
+      pinCode: "3333",
+      doorIds: ["spa"],
+      restrictions: [
+        {
+          validTo: new Date("2024-12-31T23:59:59Z"),
+        },
+      ],
+    };
+  
+    await repository.savePinCodeRegistration(registration);
+  
+    const isValid = await repository.isPinValidForDoor(
+      "3333",
+      "spa",
+      new Date("2024-06-15T10:00:00Z")
+    );
+    expect(isValid).toBe(true);
+  });
+
+  it("should validate PIN for a door with only start date restriction", async () => {
+    const registration = {
+      registeredBy: "peter",
+      pinCode: "4444",
+      doorIds: ["gym"],
+      restrictions: [
+        {
+          validFrom: new Date("2024-01-01T00:00:00Z"),
+        },
+      ],
+    };
+  
+    await repository.savePinCodeRegistration(registration);
+  
+    const isValid = await repository.isPinValidForDoor(
+      "4444",
+      "gym",
+      new Date("2024-06-15T10:00:00Z")
+    );
+    expect(isValid).toBe(true);
+  });
 });
