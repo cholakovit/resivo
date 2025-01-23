@@ -22,17 +22,17 @@ const purify = DOMPurify(window as unknown as typeof globalThis);
 export class SanitizeRequestsMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     if (req.body && typeof req.body === "object")
-      Object.keys(req.body).forEach((key) => {
+      Object.keys(req.body).forEach((key: string) => {
         if (typeof req.body[key] === "string")
           req.body[key] = purify.sanitize(req.body[key]);
       });
 
     if (req.query)
-      Object.keys(req.query).forEach((key) => {
+      Object.keys(req.query).forEach((key: string) => {
         const value = req.query[key];
         if (typeof value === "string") req.query[key] = purify.sanitize(value);
         else if (Array.isArray(value))
-          req.query[key] = value.map((item) =>
+          req.query[key] = (value as string[]).map((item: string) =>
             typeof item === "string" ? purify.sanitize(item) : item
           ) as string[];
       });

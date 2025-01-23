@@ -7,7 +7,7 @@
  * - `errors`: Optional array of additional error details.
  * This class ensures consistent error responses and supports enhanced error metadata.
  */
-
+ 
 export class ApiError extends Error implements IApiError {
   statusCode: number
   status: string

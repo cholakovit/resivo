@@ -7,7 +7,7 @@ import * as path from "path";
 
 /**
  * AppLoggerModule configures centralized logging for the application using Pino and nestjs-pino.
- * 
+ *
  * Features:
  * - Logs are written to both the console and a file (`logs/app.log`).
  * - Uses `pino-pretty` for readable logs in development mode.
@@ -22,9 +22,7 @@ import * as path from "path";
       useFactory: () => {
         const logDir = path.resolve(__dirname, "../../logs/");
 
-        if (!fs.existsSync(logDir)) {
-          fs.mkdirSync(logDir, { recursive: true });
-        }
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
 
         const logFilePath = path.resolve(logDir, "app.log");
 
@@ -32,7 +30,6 @@ import * as path from "path";
           process.env.NODE_ENV !== "production"
             ? { stream: require("pino-pretty")() }
             : { stream: process.stdout },
-
 
           {
             stream: pino.destination({
