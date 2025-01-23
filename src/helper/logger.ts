@@ -5,6 +5,17 @@ import { multistream } from "pino-multi-stream";
 import * as fs from "fs";
 import * as path from "path";
 
+/**
+ * AppLoggerModule configures centralized logging for the application using Pino and nestjs-pino.
+ * 
+ * Features:
+ * - Logs are written to both the console and a file (`logs/app.log`).
+ * - Uses `pino-pretty` for readable logs in development mode.
+ * - Automatically creates the logs directory if it doesn't exist.
+ * - Supports configurable log levels via the `LOG_LEVEL` environment variable.
+ * - Ensures seamless logging for both development and production environments.
+ */
+
 @Module({
   imports: [
     LoggerModule.forRootAsync({

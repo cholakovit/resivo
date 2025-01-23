@@ -1,7 +1,20 @@
 import * as NodeCache from 'node-cache';
+import ApiError from './ApiError';
 
 const caches = new Map<string, NodeCache>();
 
+/**
+ * CacheResult is a method decorator that caches the result of a method
+ * based on its arguments. It uses NodeCache for in-memory caching.
+ *
+ * Features:
+ * - Caches results for a specified TTL (default: 60 seconds).
+ * - Supports multiple caches identified by unique cacheId.
+ * - Handles both synchronous and asynchronous methods.
+ *
+ * Limitations:
+ * - Caching is in-memory and resets on application restart.
+ */
 export function CacheResult(
     ttl: number = 60,
     cacheId: string = "default"
@@ -19,7 +32,7 @@ export function CacheResult(
       const originalMethod = descriptor.value;
   
       if (typeof originalMethod !== "function") {
-        throw new Error(`Descriptor value for method ${String(propertyKey)} is not a function.`);
+        throw new ApiError(500, `Descriptor value for method ${String(propertyKey)} is not a function.`);
       }
   
       descriptor.value = function (...args: unknown[]): unknown {
@@ -45,7 +58,19 @@ export function CacheResult(
     };
   }
 
-
+/**
+ * ClearCache is a method decorator that clears all cached results for a specific `cacheId` 
+ * after the decorated method is executed.
+ *
+ * Features:
+ * - Supports both synchronous and asynchronous methods.
+ * - Clears the cache only if it exists (`cacheId` is found in the cache map).
+ * - Default cache ID is "default" if not explicitly specified.
+ *
+ * Example usage:
+ * @ClearCache('exampleCache')
+ * updateData(id: number, data: string): void;
+ */
 export function ClearCache(cacheId: string = 'default'): MethodDecorator {
     return function <T>(
       _: Object,
@@ -55,7 +80,7 @@ export function ClearCache(cacheId: string = 'default'): MethodDecorator {
       const originalMethod = descriptor.value;
   
       if (typeof originalMethod !== 'function') {
-        throw new Error(`Descriptor value is not a function for method ${String(propertyKey)}`);
+        throw new ApiError(500, `Descriptor value is not a function for method ${String(propertyKey)}`);
       }
   
       descriptor.value = function (...args: unknown[]) {
