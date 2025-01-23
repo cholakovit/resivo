@@ -4,8 +4,6 @@ import { PinCodeRegistrationEntity } from "../Model/PinCodeRegistrationEntity";
 import { Logger } from "@nestjs/common";
 import ApiError from "src/helper/ApiError";
 import { StatusCodes } from "http-status-codes";
-import { retry } from "rxjs";
-import { PinCodeRegistration } from "../Model/PinCodeRegistration";
 
 /**
  * A repository that provides access to stored pin registrations
@@ -305,7 +303,7 @@ export class PinCodeRegistrationRepository extends MemoryRepository<PinCodeRegis
    * @returns {boolean} True if the date falls within at least one of the restrictions, or if no restrictions are specified. Otherwise, returns false.
    */
   isDateWithinRestrictions(
-    restrictions: Array<{ validFrom?: Date; validTo?: Date }>,
+    restrictions: AccessRestrictions[],
     date: Date
   ): boolean {
     if (!restrictions || restrictions.length === 0) return true;
