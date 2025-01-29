@@ -1,6 +1,6 @@
 import { createLogger } from "./Boilerplate/Logging/LoggingService";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
 import helmet from "helmet";
 import { compressionMiddleware, corsOptions, createValidationPipe, cspOptions, rateLimiting } from "./helper/settings";
 import { Logger } from "nestjs-pino";
@@ -24,7 +24,8 @@ export async function createApp(app: INestApplication): Promise<INestApplication
 
     app.enableCors(corsOptions);
 
-    app.useGlobalPipes(createValidationPipe());
+    //app.useGlobalPipes(createValidationPipe());
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
     const logger = app.get(Logger);
     app.useGlobalFilters(new GlobalErrorHandler(logger));

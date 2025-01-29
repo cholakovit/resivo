@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Scope } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, ParseUUIDPipe, Post, Put, Scope, UsePipes, ValidationPipe } from "@nestjs/common";
 import { PinCodeRegistrationService } from "../Services/PinCodeRegistrationService";
 import { PinCodeRegistrationDto } from "../Dtos/PinCodeRegistrationDto";
 import { REQUEST } from "@nestjs/core";
@@ -35,6 +35,7 @@ export class PinCodeRegistrationController extends ControllerBase {
     }
 
     @Post("pin-codes")
+    @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
     @ApiOperation({
         summary: "Create new registration for the current user.",
     })
@@ -44,10 +45,14 @@ export class PinCodeRegistrationController extends ControllerBase {
     }
 
     @Put("pin-codes/:pinCode")
+    @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
     @ApiOperation({
         summary: "Update an existing registration (identified through the PIN) for the current user.",
     })
-    async updatePinCodeRegistration(@Param("pinCode") pinCode: string, @Body() pinCodeRegistration: PinCodeRegistrationDto) {
+    async updatePinCodeRegistration(
+        @Param("pinCode", new ParseUUIDPipe({ optional: false })) pinCode: string, 
+        @Body() pinCodeRegistration: PinCodeRegistrationDto
+    ) {
         const userId = this.getUserId();
         pinCodeRegistration.pinCode = pinCode;
         return await this.pinCodeRegistrationService.updatePinCodeAuthorizations(userId, pinCodeRegistration);
@@ -57,7 +62,7 @@ export class PinCodeRegistrationController extends ControllerBase {
     @ApiOperation({
         summary: "Revoke the user's registration for a given PIN.",
     })
-    async revokePinCodeRegistration(@Param("pinCode") pinCode: string) {
+    async revokePinCodeRegistration(@Param("pinCode", new ParseUUIDPipe({ optional: false })) pinCode: string) {
         const userId = this.getUserId();
         return await this.pinCodeRegistrationService.revokePinCodeAuthorizations(userId, pinCode);
     }

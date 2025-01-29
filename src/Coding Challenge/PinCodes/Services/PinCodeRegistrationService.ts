@@ -7,6 +7,8 @@ import { CacheResult, ClearCache } from "src/helper/decorators";
 import ApiError from "src/helper/ApiError";
 import { StatusCodes } from "http-status-codes";
 import { PinCodeRegistrationEntity } from "../Model/PinCodeRegistrationEntity";
+import { validateRegistration } from "src/helper/helpers";
+import { PinCodeRegistrationDto } from "../Dtos/PinCodeRegistrationDto";
 
 @Injectable()
 export class PinCodeRegistrationService extends LogEnabled {
@@ -32,7 +34,7 @@ export class PinCodeRegistrationService extends LogEnabled {
    */
   async registerPinCodeAuthorizations(
     userId: string,
-    registration: PinCodeRegistration
+    registration: PinCodeRegistrationDto
   ) {
     await this.validateDoors(registration.doorIds);
 
@@ -65,7 +67,7 @@ export class PinCodeRegistrationService extends LogEnabled {
    */
   async updatePinCodeAuthorizations(
     userId: string,
-    registration: PinCodeRegistration
+    registration: PinCodeRegistrationDto
   ) {
     const existingRegistration = await this.findRegistration(
       userId,
@@ -166,7 +168,7 @@ export class PinCodeRegistrationService extends LogEnabled {
     doorId: string,
     date: Date
   ): Promise<boolean> {
-    return this.pinCodeRegistrationRepository.validateRegistration(
+    return validateRegistration(
       () => this.pinCodeRegistrationRepository.getRegistration(userId, pinCode),
       doorId,
       date

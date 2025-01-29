@@ -1,6 +1,6 @@
-import * as NodeCache from 'node-cache';
-import ApiError from './ApiError';
-import { HttpStatus } from '@nestjs/common';
+import * as NodeCache from "node-cache";
+import ApiError from "./ApiError";
+import { HttpStatus } from "@nestjs/common";
 
 const caches = new Map<string, NodeCache>();
 
@@ -20,9 +20,8 @@ export function CacheResult<T>(
   ttl: number = 60,
   cacheId: string = "default"
 ): MethodDecorator {
-  if (!caches.has(cacheId)) 
-    caches.set(cacheId, new NodeCache({ stdTTL: ttl }));
-  
+  if (!caches.has(cacheId)) caches.set(cacheId, new NodeCache({ stdTTL: ttl }));
+
   const cache = caches.get(cacheId)!;
 
   return function (
@@ -33,7 +32,10 @@ export function CacheResult<T>(
     const originalMethod = descriptor.value as (...args: unknown[]) => T;
 
     if (typeof originalMethod !== "function") {
-      throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, `Descriptor value for method ${String(propertyKey)} is not a function.`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Descriptor value for method ${String(propertyKey)} is not a function.`
+      );
     }
 
     descriptor.value = function (...args: unknown[]): T | Promise<T> {
@@ -44,7 +46,7 @@ export function CacheResult<T>(
 
       const result = originalMethod.apply(this, args);
 
-      if (result instanceof Promise) 
+      if (result instanceof Promise)
         return result.then((resolvedResult: T) => {
           cache.set(cacheKey, resolvedResult);
           return resolvedResult;
@@ -57,7 +59,7 @@ export function CacheResult<T>(
 }
 
 /**
- * ClearCache is a method decorator that clears all cached results for a specific `cacheId` 
+ * ClearCache is a method decorator that clears all cached results for a specific `cacheId`
  * after the decorated method is executed.
  *
  * Features:
@@ -69,35 +71,33 @@ export function CacheResult<T>(
  * @ClearCache('exampleCache')
  * updateData(id: number, data: string): void;
  */
-export function ClearCache(cacheId: string = 'default'): MethodDecorator {
-    return function <T>(
-      _: Object,
-      propertyKey: string | symbol,
-      descriptor: TypedPropertyDescriptor<T>
-    ): void {
-      const originalMethod = descriptor.value as (...args: unknown[]) => T;
-  
-      if (typeof originalMethod !== 'function') 
-        throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, `Descriptor value is not a function for method ${String(propertyKey)}`);
-      
-  
-      descriptor.value = function (...args: unknown[]): T | Promise<T> {
-        const result = originalMethod.apply(this, args);
-  
-        if (result instanceof Promise) 
-          return result.then((resolvedResult: T) => {
-            if (caches.has(cacheId)) caches.get(cacheId)!.flushAll();
-            
-            return resolvedResult;
-          });
-        
-        if (caches.has(cacheId)) caches.get(cacheId)!.flushAll();
-  
-        return result;
-      } as T;
-  
-    };
-  }
-  
-  
-  
+export function ClearCache(cacheId: string = "default"): MethodDecorator {
+  return function <T>(
+    _: Object,
+    propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<T>
+  ): void {
+    const originalMethod = descriptor.value as (...args: unknown[]) => T;
+
+    if (typeof originalMethod !== "function")
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Descriptor value is not a function for method ${String(propertyKey)}`
+      );
+
+    descriptor.value = function (...args: unknown[]): T | Promise<T> {
+      const result = originalMethod.apply(this, args);
+
+      if (result instanceof Promise)
+        return result.then((resolvedResult: T) => {
+          if (caches.has(cacheId)) caches.get(cacheId)!.flushAll();
+
+          return resolvedResult;
+        });
+
+      if (caches.has(cacheId)) caches.get(cacheId)!.flushAll();
+
+      return result;
+    } as T;
+  };
+}
